@@ -6,10 +6,10 @@ This project focuses on training very small generative models, ranging from 3B t
 
 Guardrails in scope:
 - Is user's question in scope.
+- Is model's answer aligned with code of conduct.
 - Is models' answer in scope.
 - Is generated code/command harmfull.
 - Are external data harmfull.
-- Is model's answer aligned with code of conduct.
 
 Used base models:
 | Author        | Model                          | Parameters |
@@ -28,25 +28,36 @@ Used base models:
 
 ## Guardrail: Is user's question in scope
 
-Baseline results:
-| Model               | F1 Score |
-|---------------------|----------|
-| GPT-4o-mini         | 98%     |
-| DeepSeek-V4-Flash   | 69%     |
-| Gemini 3.1 Flash Lite | 98%   |
+- Benchmark for 712 questions:
+    - 358 out of scope
+    - 354 in scope
 
-Preliminary results:
-| Model                               |   Base |    LoRA |   LoRA+Grammar |   FN |
-|:------------------------------------|-----------:|--------:|---------------:|------------------:|
-| HuggingFaceTB/SmolLM2-1.7B-Instruct |   66.5 | 99.2 |        99.5 |                 2 |
-| HuggingFaceTB/SmolLM2-135M-Instruct |    0   | 96.7 |        97.8 |                 4 |
-| HuggingFaceTB/SmolLM2-360M-Instruct |    4.6 | 97.7 |        98.3 |                 5 |
-| Qwen/Qwen2.5-0.5B-Instruct          |   69.9 | 99.0 |        99.4 |                 2 |
-| Qwen/Qwen2.5-1.5B-Instruct          |   91.0 | 99.6 |        99.8 |                 1 |
-| google/gemma-3-1b-it                |   87.3 | 99.5 |        99.6 |                 2 |
-| google/gemma-3-270m-it              |   67.1 | 98.3 |        99.0 |                 1 |
-| meta-llama/Llama-3.2-1B-Instruct    |   15.6 | 99.6 |        99.6 |                 1 |
-| meta-llama/Llama-3.2-3B-Instruct    |   94.1 | 99.6 |        99.6 |                 3 |
+### Baseline results:
+| Model                 |   F1 | FN |
+|:----------------------|-----------:|---:|
+| GPT-4o-mini           |    98.8 |  1 |
+| Gemini 3.1 Flash Lite |    98.4 |  11|
+| DeepSeek-V4-Flash     |    69.7 | 102|
+
+- *Note: Baseline results could be improved by further prompt-engineering.*
+- *Note2: DeepSeek did not fully followed prompt and did not produced expected response*
+
+### Preliminary results:
+| Model                               |   Base |   LoRA |   LoRA Grammar |    FN |
+|:------------------------------------|-----------:|-------:|---------------:|------------------:|
+| HuggingFaceTB/SmolLM2-1.7B-Instruct |      66.67 |  99.44 |          99.3  |                 1 |
+| HuggingFaceTB/SmolLM2-135M-Instruct |       0    |  98.58 |          98.73 |                 6 |
+| HuggingFaceTB/SmolLM2-360M-Instruct |       7.16 |  99.44 |          99.3  |                 1 |
+| Qwen/Qwen2.5-0.5B-Instruct          |      67.81 |  99.44 |          99.3  |                 2 |
+| Qwen/Qwen2.5-1.5B-Instruct          |      92.22 |  99.3  |          99.3  |                 0 |
+| google/gemma-3-1b-it                |      93.03 |  99.3  |          98.59 |                 5 |
+| google/gemma-3-270m-it              |      66.35 |  98.61 |          98.61 |                 0 |
+| meta-llama/Llama-3.2-1B-Instruct    |      17.02 |  99.44 |          99.44 |                 0 |
+| meta-llama/Llama-3.2-3B-Instruct    |      95.44 |  99.72 |          99.72 |                 0 |
+
+| Model                               |   Base |   FFT |
+|:------------------------------------|-----------:|-------:|
+| HuggingFaceTB/SmolLM2-135M-Instruct |      0 |  91.86 |
 
 ![benchmark_training1](imgs/Benchmark_in_scope_input.png)
 
@@ -93,6 +104,9 @@ Any question about keyboard was in scope as chatbot could offer product to the c
 ## Model Fine-Tuning
 
 All models have been fine-tuned using PEFT (Parameter-Efficient Fine-Tuning) with LoRA. Additionally, the smallest model, `SmolLM2-135M`, was trained using FFT (Full Parameter Fine-Tuning).
+
+Training dataset consists of:
+- **Case: User's query in scope** (2000 questions, 50/50 split)
 
 ### False-Negative Punishments
 

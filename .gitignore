@@ -8,3 +8,5 @@ __pycache__/
 notes.md
 tmp/
 *.csv
+code_of_conduct/
+lora_adapter/
