@@ -92,8 +92,8 @@ The following results were observed after removing 90% of the system prompt, dem
 There was a suspicion that the test data might be too close to the train data, so I computed a similarity score between them by finding the closest match for each test question.
 
 $$
-\text{cosine\_similarity}(u, v)
-= \frac{u \cdot v}{\|u\|\;\|v\|}
+\text{cosine similarity}(u, v)
+= \frac{u \cdot v}{\|u\|\|v\|}
 $$
 
 ![consine_similarity](imgs/consine_similarity.png)
