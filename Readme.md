@@ -85,6 +85,70 @@ Used base models:
 
 ![benchmark_training2](imgs/Benchmark_in_scope_input_zoomed.png)
 
+The following results were observed after removing 90% of the system prompt, demonstrating that the model had internalized the contextual information during supervised fine‑tuning:
+
+![prompt_redact_f1_vs_epoch.png](imgs/prompt_redact_f1_vs_epoch.png)
+
+There was a suspicion that the test data might be too close to the train data, so I computed a similarity score between them by finding the closest match for each test question.
+
+$$
+\text{cosine\_similarity}(u, v)
+= \frac{u \cdot v}{\|u\|\;\|v\|}
+$$
+
+![consine_similarity](imgs/consine_similarity.png)
+
+**0.8** cutoff was determined and implemented to filter out test data.
+
+![consine_similarity2.png](imgs/consine_similarity2.png)
+
+Example of mistakes:
+```
+Question: Could you recommend a quiet switch for office use?
+Mismatch: expected 'In Scope', got 'Out of Scope'
+
+Question: What is the process to reset my Instagram password?
+Mismatch: expected 'Out of Scope', got 'In Scope'
+
+Question: What's the best switch for gaming?
+Mismatch: expected 'In Scope', got 'Out of Scope'
+
+Question: Which switch is ideal for gaming?
+Mismatch: expected 'In Scope', got 'Out of Scope'
+
+Question: How do I apply for a repair service?
+Mismatch: expected 'In Scope', got 'Out of Scope'
+
+Question: Is it safe to use my keyboard while charging my phone?
+Mismatch: expected 'Out of Scope', got 'In Scope'
+
+Question: Is it safe to use my keyboard while my phone is charging?
+Mismatch: expected 'Out of Scope', got 'In Scope'
+
+Question: My Python script is crashing repeatedly, and I need assistance.
+Mismatch: expected 'Out of Scope', got 'In Scope'
+
+Question: Is it possible to build a mechanical keyboard that is also a microwave? I want to heat my lunch while typing.
+Mismatch: expected 'Out of Scope', got 'In Scope'
+```
+
+Benchmark results after the cutoff filtering was implemented:
+![prompt_redact_f1_vs_epoch_filtered.png](imgs/prompt_redact_f1_vs_epoch_filtered.png)
+
+To improve model accuracy, the improved data synthesis algorithm was utilized to enlarged the training dataset from 2,000 to 5,500 samples including similarity cut-off.
+
+![prompt_redact_f1_vs_epoch_filtered_expanded.png](imgs/prompt_redact_f1_vs_epoch_filtered_expanded.png)
+
+To measure influence of `negative_weight` on final performance, the evaluation dataset has to be enlarged from 507 to 1200 as initially, no false-negative instances has been observed.
+
+Example of unclear questions:
+```
+Question: My grandma wants to return a toaster she bought from you, but I told her you only sell keyboards. She insists she saw a toaster in the newsletter.
+Mismatch: expected 'Out of Scope', got 'In Scope'
+```
+
+![f1_fp_per_weight](imgs/f1_fp_per_weight.png)
+
 ## Guardrail: Is generated code/command harmfull
 
 # Approach
@@ -103,6 +167,8 @@ Two pipeline has been utilized to create training dataset:
 High-temperature seeded permutation for data synthesis.
 - It provided multiple dimensions to the generated data
 - Generation prompt has been parametrized.
+
+Enabled thinking + parametrized prompt -> Changing initial condition to improve variability.
 
 ![data_synthesis2](imgs/data_synthesis2.png)
 
@@ -177,7 +243,8 @@ w\;
 }{
 \displaystyle
 \sum_{t=1}^{T} \mathbf{1}[y_t \neq -100]
-}$$
+}
+$$
 
 - $x_{1:T} be the tokenized full chat transcript  
 - $ y_{1:T} $ be the label sequence, where prompt tokens are masked with \(-100\)  
@@ -224,7 +291,9 @@ The performance of the guardrail models was evaluated primarily using the F1 sco
 
 The F1 score is defined as:
 
-$$F1 = 2 \cdot \frac{Precision \cdot Recall}{Precision + Recall}$$
+$$
+F1 = 2 \cdot \frac{Precision \cdot Recall}{Precision + Recall}
+$$
 
 Where:
 - **Precision** = TP / (TP + FP)  
